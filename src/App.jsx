@@ -1,7 +1,7 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { GlobalProvider } from "./contexts/GlobalContext";
 import Main from "./pages/Main";
-import Catatan from "./pages/Catatan";
+import Catetan from "./pages/Catatan";
 import Navbar from "./componens/Navbar";
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
           <div className="container">
             <Routes>
               <Route path="/" element={<Main />} />
-              <Route path="catatan" element={<Catatan />} />
+              <Route path="catatan" element={<Catetan />} />
             </Routes>
             <br />
             <br />

@@ -55,11 +55,22 @@ class Popup {
     });
   }
 
-  static success(title, text) {
+  static async confirm(title, text) {
+    return await Swal.fire({
+      title,
+      text,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "batal!",
+    });
+  }
+
+  static basic(title, text, icon) {
     Swal.fire({
       title,
       text,
-      icon: "success",
+      icon,
     });
   }
 }

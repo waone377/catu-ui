@@ -6,6 +6,7 @@ const GlobalContext = createContext();
 export const GlobalProvider = ({ children }) => {
   const click = useRef(new Howl({ src: clickSfx }));
   const success = useRef(new Howl({ src: successSfx }));
+  const namaRef = useRef(null);
   const [nama, setNama] = useState("");
   const [timbanganList, setTimbanganList] = useState([]);
 
@@ -25,6 +26,7 @@ export const GlobalProvider = ({ children }) => {
     setCatatan: setCatatan,
     saklarSpeech,
     setSaklarSpeech,
+    namaRef: namaRef,
   };
   return (
     <GlobalContext.Provider value={values}>{children}</GlobalContext.Provider>

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useGlobal } from "../contexts/GlobalContext";
 import speech from "../services/suara.js";
+import Popup from "../services/alert.js";
 function Output() {
   const {
     clickSound,
@@ -13,6 +14,7 @@ function Output() {
     catatan,
     setCatatan,
     saklarSpeech,
+    namaRef,
   } = useGlobal();
   const [jajaran, setJajaran] = useState(0);
   const [catu, setCatu] = useState(0);
@@ -21,10 +23,14 @@ function Output() {
     const total = timbanganList.reduce((acc, item) => {
       return acc + Number(item);
     }, 0);
+    if (!nama) {
+      Popup.basic("Oops!", "silahkan tulis nama wonge!", "warning");
+      return;
+    }
 
-    if (!ceck || total === 0 || !nama || timbanganList.length === 0) return;
+    if (!ceck || total === 0 || timbanganList.length === 0) return;
 
-    const hasilCatu = total / 6;
+    const hasilCatu = Math.floor((total / 6) * 10) / 10;
 
     successSound.play();
 
@@ -32,7 +38,7 @@ function Output() {
     setCatu(hasilCatu);
     setTimeout(() => {
       if (saklarSpeech)
-        speech(`nganggo ${nama} catune, yaniku ${hasilCatu.toFixed(1)}`);
+        speech(`nganggo ${nama} catune, yaiku ${hasilCatu.toFixed(1)}`);
     }, 1300);
 
     const data = {
@@ -45,16 +51,25 @@ function Output() {
 
     setCatatan((prev) => [...prev, data]);
     setCeck(false);
+    localStorage.removeItem("timbangan");
   };
   const onClear = () => {
     setCeck(true);
-
+    localStorage.removeItem("timbangan");
+    namaRef.current.focus();
     clickSound.play();
     setJajaran(0);
     setCatu(0);
     setTimbanganList([]);
     setNama("");
     setTimbangan("");
+  };
+  const onUndo = () => {
+    setCeck(true);
+    clickSound.play();
+    setJajaran(0);
+    setCatu(0);
+    setCatatan((prev) => prev.slice(0, -1));
   };
   return (
     <>
@@ -79,7 +94,17 @@ function Output() {
           <p className="text-center">jajaran</p>
           <p className="text-center">{jajaran}</p>
           <p className="text-center">catu</p>
-          <p className="text-center text-lg">{catu.toFixed(1)}</p>
+          <p className="text-center text-lg">{catu}</p>
+          <br />
+          <div className="text-center">
+            <button
+              className="btn btn-md btn-danger text-white"
+              type="button"
+              onClick={onUndo}
+            >
+              ulang
+            </button>
+          </div>
           <br />
           <div className="text-center">
             <button
@@ -87,7 +112,7 @@ function Output() {
               type="button"
               onClick={onClear}
             >
-              ×
+              lanjut
             </button>
           </div>
         </>
