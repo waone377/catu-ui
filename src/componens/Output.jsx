@@ -17,7 +17,6 @@ function Output() {
     namaRef,
   } = useGlobal();
   const [output, setOutput] = useState(null);
-  const [ceck, setCeck] = useState(true);
   useEffect(() => {
     const db = localStorage.getItem("timbangan");
     const t = JSON?.parse(db) || null;
@@ -32,8 +31,9 @@ function Output() {
       Popup.basic("Oops!", "silahkan tulis nama wonge!", "warning");
       return;
     }
+    const ceck = localStorage?.getItem("onJumlah") || "yes";
 
-    if (!ceck || total === 0 || timbanganList.length === 0) return;
+    if (ceck === "no" || total === 0 || timbanganList.length === 0) return;
 
     const hasilCatu = Math.floor((total / 6) * 10) / 10;
 
@@ -61,10 +61,10 @@ function Output() {
       localStorage.setItem("catatan", JSON.stringify(update));
       return update;
     });
-    setCeck(false);
+    localStorage.setItem("onJumlah", "no");
   };
   const onClear = () => {
-    setCeck(true);
+    localStorage.setItem("onJumlah", "yes");
     localStorage.removeItem("timbangan");
     namaRef.current.focus();
     clickSound.play();
@@ -74,7 +74,7 @@ function Output() {
     setTimbangan("");
   };
   const onUndo = () => {
-    setCeck(true);
+    localStorage.setItem("onJumlah", "yes");
     clickSound.play();
     setOutput(null);
     setCatatan((prev) => prev.slice(0, -1));
