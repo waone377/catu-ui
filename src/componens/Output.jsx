@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGlobal } from "../contexts/GlobalContext";
 import speech from "../services/suara.js";
 import Popup from "../services/alert.js";
@@ -16,9 +16,14 @@ function Output() {
     saklarSpeech,
     namaRef,
   } = useGlobal();
-  const [jajaran, setJajaran] = useState(0);
-  const [catu, setCatu] = useState(0);
+  const [output, setOutput] = useState(null);
   const [ceck, setCeck] = useState(true);
+  useEffect(() => {
+    const db = localStorage.getItem("timbangan");
+    const t = JSON?.parse(db) || null;
+    if (!t) return;
+    setOutput(t.output);
+  }, []);
   const onHanler = () => {
     const total = timbanganList.reduce((acc, item) => {
       return acc + Number(item);
@@ -34,8 +39,6 @@ function Output() {
 
     successSound.play();
 
-    setJajaran(total);
-    setCatu(hasilCatu);
     setTimeout(() => {
       if (saklarSpeech)
         speech(`nganggo ${nama} catune, yaiku ${hasilCatu.toFixed(1)}`);
@@ -48,18 +51,24 @@ function Output() {
       jajaran: total,
       catu: hasilCatu,
     };
+    setOutput(data);
+    const db = JSON?.parse(localStorage.getItem("timbangan")) || {};
+    db.output = data;
+    localStorage.setItem("timbangan", JSON.stringify(db));
 
-    setCatatan((prev) => [...prev, data]);
+    setCatatan((prev) => {
+      const update = [...prev, data];
+      localStorage.setItem("catatan", JSON.stringify(update));
+      return update;
+    });
     setCeck(false);
-    localStorage.removeItem("timbangan");
   };
   const onClear = () => {
     setCeck(true);
     localStorage.removeItem("timbangan");
     namaRef.current.focus();
     clickSound.play();
-    setJajaran(0);
-    setCatu(0);
+    setOutput(null);
     setTimbanganList([]);
     setNama("");
     setTimbangan("");
@@ -67,8 +76,7 @@ function Output() {
   const onUndo = () => {
     setCeck(true);
     clickSound.play();
-    setJajaran(0);
-    setCatu(0);
+    setOutput(null);
     setCatatan((prev) => prev.slice(0, -1));
   };
   return (
@@ -84,17 +92,17 @@ function Output() {
       </div>
       <p className="text-center fst-italic">hasil:</p>
       <br />
-      {!jajaran || !catu ? (
+      {!output ? (
         <p className="text-center text-lg">???</p>
       ) : (
         <>
-          <p className="text-center text-uppercase">{nama}</p>
+          <p className="text-center text-uppercase">{output.nama}</p>
           <p className="text-center">timbangan</p>
-          <p className="text-center">{timbanganList.join("+")}</p>
+          <p className="text-center">{output.timbanganList.join("+")}</p>
           <p className="text-center">jajaran</p>
-          <p className="text-center">{jajaran}</p>
+          <p className="text-center">{output.jajaran}</p>
           <p className="text-center">catu</p>
-          <p className="text-center text-lg">{catu}</p>
+          <p className="text-center text-lg">{output.catu}</p>
           <br />
           <div className="text-center">
             <button
