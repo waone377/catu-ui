@@ -12,7 +12,9 @@ export const GlobalProvider = ({ children }) => {
 
   const [timbangan, setTimbangan] = useState("");
   const [catatan, setCatatan] = useState([]);
+  const [output, setOutput] = useState(null);
   const [saklarSpeech, setSaklarSpeech] = useState(true);
+  // data yang bisa diakses
   const values = {
     clickSound: click.current,
     successSound: success.current,
@@ -27,6 +29,8 @@ export const GlobalProvider = ({ children }) => {
     saklarSpeech,
     setSaklarSpeech,
     namaRef: namaRef,
+    output: output,
+    setOutput: setOutput,
   };
   return (
     <GlobalContext.Provider value={values}>{children}</GlobalContext.Provider>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useGlobal } from "../contexts/GlobalContext";
 import speech from "../services/suara.js";
 import Popup from "../services/alert.js";
+import Storage from "../services/storage.js";
 function Output() {
   const {
     clickSound,
@@ -15,33 +16,43 @@ function Output() {
     setCatatan,
     saklarSpeech,
     namaRef,
+    output,
+    setOutput,
   } = useGlobal();
-  const [output, setOutput] = useState(null);
+  // triger data output saat render
   useEffect(() => {
-    const db = localStorage.getItem("timbangan");
-    const t = JSON?.parse(db) || null;
-    if (!t) return;
-    setOutput(t.output);
+    const db = Storage.dbTimbangan("get", {
+      nama: "",
+      timbangan: [],
+      output: null,
+    });
+    setOutput(db?.output || null);
   }, []);
+  // fungsi tombol jumlah
   const onHanler = () => {
+    const ceck = Storage.dbOnJumlah("get", "yes");
+
     const total = timbanganList.reduce((acc, item) => {
       return acc + Number(item);
     }, 0);
+    if (ceck === "no" || total === 0 || timbanganList.length === 0) return;
     if (!nama) {
-      Popup.basic("Oops!", "silahkan tulis nama wonge!", "warning");
+      Popup.basic("periksa!", "silahkan tulis nama wonge!", "warning");
       return;
     }
-    const ceck = localStorage?.getItem("onJumlah") || "yes";
+    // hasil catu
 
-    if (ceck === "no" || total === 0 || timbanganList.length === 0) return;
-
-    const hasilCatu = Math.floor((total / 6) * 10) / 10;
+    let hasilCatu = Math.floor((total / 6) * 10) / 10;
 
     successSound.play();
+    // triger suara voice
 
     setTimeout(() => {
-      if (saklarSpeech)
-        speech(`nganggo ${nama} catune, yaiku ${hasilCatu.toFixed(1)}`);
+      if (saklarSpeech) {
+        speech(
+          `nganggo ${nama} catune, yaiku ${String(hasilCatu.toFixed(1)).replace(".", ",")}`,
+        );
+      }
     }, 1300);
 
     const data = {
@@ -52,32 +63,41 @@ function Output() {
       catu: hasilCatu,
     };
     setOutput(data);
-    const db = JSON?.parse(localStorage.getItem("timbangan")) || {};
-    db.output = data;
-    localStorage.setItem("timbangan", JSON.stringify(db));
+    const db = Storage.dbTimbangan("get", { nama: "", timbangan: [] });
+    Storage.dbTimbangan("post", { ...db, output: data });
+    Storage.dbOnJumlah("post", "no");
+  };
+  // fungsi tombol lanjut
+  const onLanjut = () => {
+    clickSound.play();
 
     setCatatan((prev) => {
-      const update = [...prev, data];
-      localStorage.setItem("catatan", JSON.stringify(update));
+      const update = [...prev, output];
+      setTimeout(() =>{
+        Storage.dbCatatan("post", update);
+      }, 500);
       return update;
     });
-    localStorage.setItem("onJumlah", "no");
-  };
-  const onClear = () => {
-    localStorage.setItem("onJumlah", "yes");
-    localStorage.removeItem("timbangan");
+    if (saklarSpeech) {
+      speech(`oke, ${nama}, wis kecatet, selanjute sapa?`);
+    }
     namaRef.current.focus();
-    clickSound.play();
     setOutput(null);
     setTimbanganList([]);
     setNama("");
     setTimbangan("");
+    Storage.dbOnJumlah("post", "yes");
+    Storage.dbRemove("timbangan");
   };
-  const onUndo = () => {
-    localStorage.setItem("onJumlah", "yes");
+  // fungsi tombol ulang
+  const onUlang = () => {
     clickSound.play();
+    Storage.dbOnJumlah("post", "yes");
+    Storage.dbTimbangan("post", {
+      nama: nama,
+      timbangan: timbanganList,
+    });
     setOutput(null);
-    setCatatan((prev) => prev.slice(0, -1));
   };
   return (
     <>
@@ -102,13 +122,15 @@ function Output() {
           <p className="text-center">jajaran</p>
           <p className="text-center">{output.jajaran}</p>
           <p className="text-center">catu</p>
-          <p className="text-center text-lg">{output.catu}</p>
+          <p className="text-center text-lg">
+            {String(output.catu).replace(".", ",")}
+          </p>
           <br />
           <div className="text-center">
             <button
               className="btn btn-md btn-danger text-white"
               type="button"
-              onClick={onUndo}
+              onClick={onUlang}
             >
               ulang
             </button>
@@ -118,7 +140,7 @@ function Output() {
             <button
               className="btn btn-md btn-dark text-white"
               type="button"
-              onClick={onClear}
+              onClick={onLanjut}
             >
               lanjut
             </button>

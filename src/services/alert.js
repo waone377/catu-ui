@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 class Popup {
   static async input() {
     // Input Nama File
-    const resultNama = await Swal.fire({
+    const resultNamaFile = await Swal.fire({
       title: "Masukkan Nama File",
       input: "text",
       inputLabel: "Nama File/sawah?",
@@ -17,8 +17,8 @@ class Popup {
     });
 
     // Cek Cancel di Nama File
-    if (!resultNama.isConfirmed) {
-      return { resultNamaFile: resultNama };
+    if (!resultNamaFile.isConfirmed) {
+      return { resultNamaFile: resultNamaFile };
     }
 
     // Pilih Musim
@@ -26,8 +26,8 @@ class Popup {
       title: "Pilih musim?",
       input: "select",
       inputOptions: {
-        sadon: "sadonan",
         rendeng: "rendengan",
+        sadon: "sadonan",
       },
       inputPlaceholder: "Pilih salah sawiji",
       showCancelButton: true,
@@ -39,7 +39,7 @@ class Popup {
     });
 
     return {
-      resultNamaFile: resultNama,
+      resultNamaFile: resultNamaFile,
       resultMusim: resultMusim,
     };
   }

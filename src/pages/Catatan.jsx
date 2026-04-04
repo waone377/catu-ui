@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { useGlobal } from "../contexts/GlobalContext";
 import Popup from "../services/alert.js";
+import Storage from "../services/storage.js";
 
 function Catetan() {
   const { clickSound, catatan, setCatatan } = useGlobal();
@@ -11,24 +12,21 @@ function Catetan() {
 
   // Ambil data dari localStorage saat pertama render
   useEffect(() => {
-    const db = localStorage.getItem("catatan") || "[]";
-    const c = JSON.parse(db);
-    if (c.length !== 0) {
-      setCatatan(c);
-    }
+    const db = Storage.dbCatatan("get", []);
+    setCatatan(db || []);
   }, []);
 
-  // Simpan ke localStorage setiap catatan berubah
-  useEffect(() => {
-    localStorage.setItem("catatan", JSON.stringify(catatan));
-  }, [catatan]);
+  // fungsi clear catatan
 
   const onClear = async () => {
     const resultClear = await Popup.clear();
     if (resultClear.isConfirmed) {
+      clickSound.play();
+      Storage.dbCatatan("post", []);
       setCatatan([]);
     }
   };
+  // fungsi hapus user by id
 
   const onDelete = async (c) => {
     const resultDelete = await Popup.confirm(
@@ -36,10 +34,14 @@ function Catetan() {
       "yakin ingin hapus datane " + c.nama.toUpperCase() + "!",
     );
     if (!resultDelete.isConfirmed) return;
-    const catatanFilter = catatan.filter((e) => e.id !== c.id);
     clickSound.play();
-    setCatatan(catatanFilter);
+    setCatatan((prev) => {
+      const update = prev.filter((e) => e.id !== c.id);
+      Storage.dbCatatan("post", update);
+      return update;
+    });
   };
+  // fungsi unduh catatan
 
   const onUnduh = async () => {
     const waktu = format(new Date(), "EEEE, dd-MMMM-yyyy | HH:mm", {
@@ -69,20 +71,22 @@ musim: ${musim}
   jajaran
   ${e.jajaran}
   catu
-  ${e.catu}
+  ${String(e.catu).replace(".", ",")}
 ~#~
 `;
       })
       .join("\n");
 
-    const totalCatu = catatan.reduce((acc, e) => acc + Number(e.catu), 0);
+    let totalCatu = catatan.reduce((acc, e) => acc + Number(e.catu), 0);
+    totalCatu = Math.floor(totalCatu * 10) / 10;
     const totalJajaran = catatan.reduce((acc, e) => acc + Number(e.jajaran), 0);
-    const bersih = totalJajaran - totalCatu;
+    let bersih = totalJajaran - totalCatu;
+    bersih = Math.floor(bersih * 10) / 10;
 
     const kalkulasi = `====
-  total catu: ${Math.floor(totalCatu * 10) / 10}
+  total catu: ${String(totalCatu).replace(".", ",")}
   hasil kotor: ${totalJajaran}
-  hasil bersih: ${Math.floor(bersih * 10) / 10}`;
+  hasil bersih: ${String(bersih).replace(".", ",")}`;
 
     const blob = new Blob([header + text + kalkulasi], {
       type: "text/plain;charset=utf-8",
@@ -147,7 +151,9 @@ musim: ${musim}
               <p className="text-center">jajaran</p>
               <p className="text-center">{e.jajaran}</p>
               <p className="text-center">catu</p>
-              <p className="text-center text-lg">{e.catu.toFixed(1)}</p>
+              <p className="text-center text-lg">
+                {String(e.catu.toFixed(1)).replace(".", ",")}
+              </p>
 
               <div className="text-center">
                 <button
